@@ -51,6 +51,7 @@ def loadFromJson(file):
     data = []
     with open(file, 'r') as f:
         data = json.load(f, encoding='cp1252')
+
     return to_sentences(data)
 
 
@@ -82,65 +83,118 @@ def abstracts_to_sentences(abstracts, labels):
     return ret, ret_prev, ret_next, ret_pos, ret_labels, abstracts_idx
 
 
-def classificador(corpus, carac, ngrama, chi, k, algo, crossval):
-    print(time.asctime(time.localtime(time.time())))
+def classificador1():
 
-    print("Lendo arquivo...")
-    _, _, data, labels, _ = loadFromJson('corpus/' + corpus + '.json')
+    corpus = 'corpus/output366.json'
+    # corpus = 'corpus/output466.json'
+    # corpus = 'corpus/output832.json'
+    # corpus = 'corpus/dev.json'
+    # corpus = 'corpus/data.json'
+
+    ngrama = 1
+
+    k = 500
+
+    print (time.asctime(time.localtime(time.time())))
+
+    print("lendo arquivo")
+    _, _, data, labels, _ = loadFromJson(corpus)
+
     X_sentences, X_prev, X_next, X_pos, Y_sentences, _ = abstracts_to_sentences(data, labels)
 
+    print("Apply tfidf")
     vectorizer = TfidfVectorizer(ngram_range=(1, ngrama))
     X_sentences = vectorizer.fit_transform(X_sentences)
-    if carac:
-        X_prev = vectorizer.fit(X_prev)
-        X_next = vectorizer.fit(X_next)
+    X_prev = vectorizer.transform(X_prev)
+    X_next = vectorizer.transform(X_next)
 
-    if chi:
-        print("Aplicando chi")
-        selector = SelectKBest(chi2, k=k)
-        X_sentences = selector.fit_transform(X_sentences, Y_sentences)
-        if carac:
-            X_prev = selector.transform(X_prev)
-            X_next = selector.transform(X_next)
+    print(len(vectorizer.get_feature_names()))
 
-    print("Adicionando ao treino prev e next")
-    if carac:
-        X_sentences = hstack([X_sentences, X_prev, X_next, np.expand_dims(np.array(X_pos), -1)])
-    else:
-        X_sentences = hstack([X_sentences, np.expand_dims(np.array(X_pos), -1)])
+    """
+    """
+    print("Apply chi")
+    selector = SelectKBest(chi2, k=k)
+    X_sentences = selector.fit_transform(X_sentences, Y_sentences)
+    X_prev = selector.transform(X_prev)
+    X_next = selector.transform(X_next)
 
+
+    print("add prev next train")
+    X_sentences = hstack([X_sentences, X_prev, X_next, np.expand_dims(np.array(X_pos), -1)])
 
     print("Inicializando classificador...")
-    if algo == 0:
-        clf = LinearSVC(dual=False, tol=1e-3)
-    elif algo == 1:
-        clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
-    elif algo == 2:
-        clf = MultinomialNB()
-    else:
-        clf = DecisionTreeClassifier(random_state=0)
+    clf = LinearSVC(dual=False, tol=1e-3)
+    # clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
+    # clf = MultinomialNB()
+    # clf = DecisionTreeClassifier(random_state=0)
     clf = clf.fit(X_sentences, Y_sentences)
 
-    print("Predicao")
-    pred = cross_val_predict(clf, X_sentences, Y_sentences, cv=crossval)
+    print("Predicão...")
+    pred = cross_val_predict(clf, X_sentences, Y_sentences, cv=10)
 
     print("Classification_report:")
     print(classification_report(Y_sentences, pred))
     print("Accuracy_score:")
     print(metrics.accuracy_score(Y_sentences, pred))
+    print("")
+    print(confusion_matrix(Y_sentences, pred))
+
+    print (time.asctime(time.localtime(time.time())))
+
+
+def classificador2():
+
+    corpus = 'corpus/output366.json'
+    # corpus = 'corpus/output466.json'
+    # corpus = 'corpus/output832.json'
+    # corpus = 'corpus/dev.json'
+    # corpus = 'corpus/data.json'
+
+    ngrama = 1
+
+    k = 500
+
+    print(time.asctime(time.localtime(time.time())))
+
+    print("lendo arquivo")
+    _, _, data, labels, _ = loadFromJson(corpus)
+
+    X_sentences, _, _, X_pos, Y_sentences, _ = abstracts_to_sentences(data, labels)
+
+    print("Apply tfidf")
+    vectorizer = TfidfVectorizer(ngram_range=(1, ngrama))
+    X_sentences = vectorizer.fit_transform(X_sentences)
+
+    print(len(vectorizer.get_feature_names()))
+
+    """
+    """
+    print("Apply chi")
+    selector = SelectKBest(chi2, k=k)
+    X_sentences = selector.fit_transform(X_sentences, Y_sentences)
+
+
+    print("add prev next train")
+    X_sentences = hstack([X_sentences, np.expand_dims(np.array(X_pos), -1)])
+
+    print("Inicializando classificador...")
+    clf = LinearSVC(dual=False, tol=1e-3)
+    # clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
+    # clf = MultinomialNB()
+    # clf = DecisionTreeClassifier(random_state=0)
+    clf = clf.fit(X_sentences, Y_sentences)
+
+    print("Predição...")
+    pred = cross_val_predict(clf, X_sentences, Y_sentences, cv=10)
+
+    print("Classification_report:")
+    print(classification_report(Y_sentences, pred))
+    print("Accuracy_score: ")
+    print(metrics.accuracy_score(Y_sentences, pred))
+    print("")
     print(confusion_matrix(Y_sentences, pred))
 
     print(time.asctime(time.localtime(time.time())))
 
-
-def main():
-    corpus = str(raw_input("Digite o nome do corpus (dev, data, output366, output466, output832): "))
-    carac = bool(raw_input("Digite \n [0] - TfIdf da sentenca e posicao da sentenca; \n [1] - TfIdf da sentenca, TfIdf das sentencas anterior e posterior e posicao da sentenca. \n"))
-    ngrama = int(raw_input("Digite o valor para n-grama: "))
-    chi = bool(raw_input ("Realizar selecao com chi2 ([0] - Nao; [1] - Sim)? "))
-    k = int(raw_input("Digite o valor de k: "))
-    algo = int(raw_input("Digite o algoritmo:\n[0] SVM;\n[1] KNN;\n[2] NB;\n[3] DT.\n"))
-    classificador(corpus, carac, ngrama, chi, k, algo, 10)
-
-
-main()
+classificador1()
+# classificador2()
