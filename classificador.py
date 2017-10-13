@@ -134,8 +134,6 @@ def classificador1():
 
     print("Classification_report:")
     print(classification_report(Y_sentences, pred))
-    print("Accuracy_score:")
-    print(metrics.accuracy_score(Y_sentences, pred))
     print("")
     print(confusion_matrix(Y_sentences, pred))
 
@@ -189,8 +187,6 @@ def classificador2():
 
     print("Classification_report:")
     print(classification_report(Y_sentences, pred))
-    print("Accuracy_score: ")
-    print(metrics.accuracy_score(Y_sentences, pred))
     print("")
     print(confusion_matrix(Y_sentences, pred))
 
