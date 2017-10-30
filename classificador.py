@@ -15,6 +15,9 @@ from sklearn import neighbors
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 
+from gensim.models import KeyedVectors
+import fasttext
+
 
 def to_sentences(abstracts, senteces_max=None):
     sentences = []
@@ -124,10 +127,10 @@ def classificador1():
 
     print("Inicializando classificador...")
     clf = LinearSVC(dual=False, tol=1e-3)
-    # clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
+    clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
     # clf = MultinomialNB()
     # clf = DecisionTreeClassifier(random_state=0)
-    clf = clf.fit(X_sentences, Y_sentences)
+    # clf = clf.fit(X_sentences, Y_sentences)
 
     print("Predicão...")
     pred = cross_val_predict(clf, X_sentences, Y_sentences, cv=10)
@@ -156,7 +159,6 @@ def classificador2():
 
     print("lendo arquivo")
     _, _, data, labels, _ = loadFromJson(corpus)
-
     X_sentences, _, _, X_pos, Y_sentences, _ = abstracts_to_sentences(data, labels)
 
     print("Apply tfidf")
@@ -192,5 +194,13 @@ def classificador2():
 
     print(time.asctime(time.localtime(time.time())))
 
-classificador1()
+
+def classificador3():
+    print(time.asctime(time.localtime(time.time())))
+    model = KeyedVectors.load_word2vec_format(fname='glove_s50.txt', binary=False, unicode_errors="ignore")
+    print(time.asctime(time.localtime(time.time())))
+
+
+# classificador1()
 # classificador2()
+classificador3()
