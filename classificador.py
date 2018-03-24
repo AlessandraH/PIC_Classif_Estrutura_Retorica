@@ -15,9 +15,6 @@ from sklearn import neighbors
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 
-from gensim.models import KeyedVectors
-import fasttext
-
 
 def to_sentences(abstracts, senteces_max=None):
     sentences = []
@@ -86,6 +83,7 @@ def abstracts_to_sentences(abstracts, labels):
     return ret, ret_prev, ret_next, ret_pos, ret_labels, abstracts_idx
 
 
+# atributos: tfidf da palavra, tfidf da palavra anterior, tfidf da palavra posterior e posição da palavra
 def classificador1():
 
     corpus = 'corpus/output366.json'
@@ -126,8 +124,8 @@ def classificador1():
     X_sentences = hstack([X_sentences, X_prev, X_next, np.expand_dims(np.array(X_pos), -1)])
 
     print("Inicializando classificador...")
-    clf = LinearSVC(dual=False, tol=1e-3)
-    clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
+    # clf = LinearSVC(dual=False, tol=1e-3)
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3, weights='uniform')
     # clf = MultinomialNB()
     # clf = DecisionTreeClassifier(random_state=0)
     # clf = clf.fit(X_sentences, Y_sentences)
@@ -143,6 +141,7 @@ def classificador1():
     print (time.asctime(time.localtime(time.time())))
 
 
+# atributos: tfidf da palavra e posição da palavra
 def classificador2():
 
     corpus = 'corpus/output366.json'
@@ -178,8 +177,8 @@ def classificador2():
     X_sentences = hstack([X_sentences, np.expand_dims(np.array(X_pos), -1)])
 
     print("Inicializando classificador...")
-    clf = LinearSVC(dual=False, tol=1e-3)
-    # clf = neighbors.KNeighborsClassifier(n_neighbors=15, weights='uniform')
+    # clf = LinearSVC(dual=False, tol=1e-3)
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3, weights='uniform')
     # clf = MultinomialNB()
     # clf = DecisionTreeClassifier(random_state=0)
     clf = clf.fit(X_sentences, Y_sentences)
@@ -195,12 +194,5 @@ def classificador2():
     print(time.asctime(time.localtime(time.time())))
 
 
-def classificador3():
-    print(time.asctime(time.localtime(time.time())))
-    model = KeyedVectors.load_word2vec_format(fname='glove_s50.txt', binary=False, unicode_errors="ignore")
-    print(time.asctime(time.localtime(time.time())))
-
-
-# classificador1()
+classificador1()
 # classificador2()
-classificador3()
