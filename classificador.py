@@ -2,9 +2,7 @@
 
 import json
 import numpy as np
-import time
 
-from sklearn import metrics
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cross_validation import cross_val_predict
@@ -83,8 +81,7 @@ def abstracts_to_sentences(abstracts, labels):
     return ret, ret_prev, ret_next, ret_pos, ret_labels, abstracts_idx
 
 
-# atributos: tfidf da palavra, tfidf da palavra anterior, tfidf da palavra posterior e posição da palavra
-def classificador1():
+def classificador():
 
     corpus = 'corpus/output366.json'
     # corpus = 'corpus/output466.json'
@@ -96,14 +93,11 @@ def classificador1():
 
     k = 500
 
-    print (time.asctime(time.localtime(time.time())))
-
     print("lendo arquivo")
     _, _, data, labels, _ = loadFromJson(corpus)
-
     X_sentences, X_prev, X_next, X_pos, Y_sentences, _ = abstracts_to_sentences(data, labels)
 
-    print("Apply tfidf")
+    print("tfidf")
     vectorizer = TfidfVectorizer(ngram_range=(1, ngrama))
     X_sentences = vectorizer.fit_transform(X_sentences)
     X_prev = vectorizer.transform(X_prev)
@@ -111,21 +105,18 @@ def classificador1():
 
     print(len(vectorizer.get_feature_names()))
 
-    """
-    """
-    print("Apply chi")
+    print("chi-quadrado")
     selector = SelectKBest(chi2, k=k)
     X_sentences = selector.fit_transform(X_sentences, Y_sentences)
     X_prev = selector.transform(X_prev)
     X_next = selector.transform(X_next)
 
-
-    print("add prev next train")
+    print("adicionando anterior e posterior")
     X_sentences = hstack([X_sentences, X_prev, X_next, np.expand_dims(np.array(X_pos), -1)])
 
     print("Inicializando classificador...")
-    # clf = LinearSVC(dual=False, tol=1e-3)
-    clf = neighbors.KNeighborsClassifier(n_neighbors=3, weights='uniform')
+    clf = LinearSVC(dual=False, tol=1e-3)
+    # clf = neighbors.KNeighborsClassifier(n_neighbors=3, weights='uniform')
     # clf = MultinomialNB()
     # clf = DecisionTreeClassifier(random_state=0)
     # clf = clf.fit(X_sentences, Y_sentences)
@@ -138,61 +129,5 @@ def classificador1():
     print("")
     print(confusion_matrix(Y_sentences, pred))
 
-    print (time.asctime(time.localtime(time.time())))
 
-
-# atributos: tfidf da palavra e posição da palavra
-def classificador2():
-
-    corpus = 'corpus/output366.json'
-    # corpus = 'corpus/output466.json'
-    # corpus = 'corpus/output832.json'
-    # corpus = 'corpus/dev.json'
-    # corpus = 'corpus/data.json'
-
-    ngrama = 1
-
-    k = 500
-
-    print(time.asctime(time.localtime(time.time())))
-
-    print("lendo arquivo")
-    _, _, data, labels, _ = loadFromJson(corpus)
-    X_sentences, _, _, X_pos, Y_sentences, _ = abstracts_to_sentences(data, labels)
-
-    print("Apply tfidf")
-    vectorizer = TfidfVectorizer(ngram_range=(1, ngrama))
-    X_sentences = vectorizer.fit_transform(X_sentences)
-
-    print(len(vectorizer.get_feature_names()))
-
-    """
-    """
-    print("Apply chi")
-    selector = SelectKBest(chi2, k=k)
-    X_sentences = selector.fit_transform(X_sentences, Y_sentences)
-
-
-    print("add prev next train")
-    X_sentences = hstack([X_sentences, np.expand_dims(np.array(X_pos), -1)])
-
-    print("Inicializando classificador...")
-    # clf = LinearSVC(dual=False, tol=1e-3)
-    clf = neighbors.KNeighborsClassifier(n_neighbors=3, weights='uniform')
-    # clf = MultinomialNB()
-    # clf = DecisionTreeClassifier(random_state=0)
-    clf = clf.fit(X_sentences, Y_sentences)
-
-    print("Predição...")
-    pred = cross_val_predict(clf, X_sentences, Y_sentences, cv=10)
-
-    print("Classification_report:")
-    print(classification_report(Y_sentences, pred))
-    print("")
-    print(confusion_matrix(Y_sentences, pred))
-
-    print(time.asctime(time.localtime(time.time())))
-
-
-classificador1()
-# classificador2()
+classificador()
